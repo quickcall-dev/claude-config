@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# Shared helpers for all installers
+
+R='\033[0m' B='\033[1m' D='\033[2m'
+GRN='\033[32m' YLW='\033[33m' RED='\033[31m'
+CYN='\033[36m' BLU='\033[34m' MAG='\033[35m'
+
+ok()   { printf "  ${GRN}${B}✓${R} %b\n" "$1"; }
+warn() { printf "  ${YLW}${B}!${R} %b\n" "$1"; }
+fail() { printf "  ${RED}${B}✗${R} %b\n" "$1"; }
+step() { printf "\n  ${CYN}${B}→${R} %b\n" "$1"; }
+
+OS="$(uname -s)"
+case "$OS" in
+    Darwin) PLATFORM="mac" ;;
+    Linux)  PLATFORM="linux" ;;
+    *)      fail "Unsupported OS: $OS"; exit 1 ;;
+esac
+
+pkg_install() {
+    local pkg="$1"
+    if [[ "$PLATFORM" == "mac" ]]; then
+        command -v brew &>/dev/null || { fail "Homebrew not found: https://brew.sh"; return 1; }
+        brew install "$pkg"
+    else
+        if command -v apt-get &>/dev/null; then
+            sudo apt-get update -qq && sudo apt-get install -y -qq "$pkg"
+        elif command -v dnf &>/dev/null; then
+            sudo dnf install -y "$pkg"
+        elif command -v pacman &>/dev/null; then
+            sudo pacman -S --noconfirm "$pkg"
+        else
+            fail "No supported package manager found"; return 1
+        fi
+    fi
+}
+
+ensure_cmd() {
+    local cmd="$1" pkg="${2:-$1}"
+    if command -v "$cmd" &>/dev/null; then
+        ok "$cmd ${D}$(command -v "$cmd")${R}"
+        return 0
+    else
+        warn "$cmd not found — installing"
+        pkg_install "$pkg"
+        ok "$cmd installed"
+    fi
+}
+
+backup_file() {
+    local file="$1"
+    if [[ -f "$file" ]] && [[ ! -L "$file" ]]; then
+        local bak="${file}.backup.$(date +%Y%m%d_%H%M%S)"
+        cp "$file" "$bak"
+        ok "backed up ${D}→ $bak${R}"
+    fi
+}
