@@ -33,7 +33,7 @@ fi
 if ! command -v tree-sitter &>/dev/null; then
     if command -v npm &>/dev/null; then
         warn "tree-sitter-cli not found — installing"
-        npm install -g tree-sitter-cli
+        sudo npm install -g tree-sitter-cli
         ok "tree-sitter-cli installed"
     else
         warn "tree-sitter-cli not found (npm not available — skipping)"
