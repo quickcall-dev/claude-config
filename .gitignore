@@ -1,1 +1,5 @@
 *.cast
+node_modules/
+tmux/node_modules/
+tmux/test-logs/
+*.log
