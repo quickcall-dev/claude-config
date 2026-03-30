@@ -112,19 +112,23 @@ clean_editor_settings() {
 
     local tmp=$(mktemp)
     grep -v '"terminal.integrated.gpuAcceleration"' "$settings_file" \
-        | grep -v '"terminal.integrated.profiles.osx"' \
-        | grep -v '"terminal.integrated.defaultProfile.osx"' \
+        | grep -v '"terminal.integrated.profiles\.' \
+        | grep -v '"terminal.integrated.defaultProfile\.' \
         > "$tmp" && mv "$tmp" "$settings_file"
     ok "$editor_name tmux settings removed"
 }
 
-clean_editor_settings "$HOME/Library/Application Support/Code/User/settings.json" "VS Code"
-clean_editor_settings "$HOME/Library/Application Support/Cursor/User/settings.json" "Cursor"
+if [[ "$(uname -s)" == "Darwin" ]]; then
+    clean_editor_settings "$HOME/Library/Application Support/Code/User/settings.json" "VS Code"
+    clean_editor_settings "$HOME/Library/Application Support/Cursor/User/settings.json" "Cursor"
+else
+    clean_editor_settings "$HOME/.config/Code/User/settings.json" "VS Code"
+    clean_editor_settings "$HOME/.config/Cursor/User/settings.json" "Cursor"
+fi
 
 # ─── Done ───
 
 echo ""
 echo -e "${GREEN}Done.${NC} Configs and plugins removed."
-echo "  Homebrew packages (tmux, neovim, fzf) were left installed."
-echo "  To remove those too: brew uninstall tmux neovim fzf"
+echo "  Packages (tmux, neovim, fzf) were left installed."
 echo ""

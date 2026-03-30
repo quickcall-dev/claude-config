@@ -18,30 +18,79 @@ echo "  ship it."
 echo -e "  ${TEAL}quick${NC}"
 echo ""
 
+# ─── Detect OS ───
+
+OS="$(uname -s)"
+case "$OS" in
+    Darwin) PLATFORM="mac" ;;
+    Linux)  PLATFORM="linux" ;;
+    *)      fail "Unsupported OS: $OS" ;;
+esac
+
+# ─── Package install helper ───
+
+pkg_install() {
+    local pkg="$1"
+    if [[ "$PLATFORM" == "mac" ]]; then
+        if ! command -v brew &>/dev/null; then
+            fail "Homebrew not found. Install it: https://brew.sh"
+        fi
+        brew install "$pkg"
+    else
+        if command -v apt-get &>/dev/null; then
+            sudo apt-get update -qq && sudo apt-get install -y -qq "$pkg"
+        elif command -v dnf &>/dev/null; then
+            sudo dnf install -y "$pkg"
+        elif command -v pacman &>/dev/null; then
+            sudo pacman -S --noconfirm "$pkg"
+        else
+            fail "No supported package manager found (apt/dnf/pacman)"
+        fi
+    fi
+}
+
 # ─── Check / install dependencies ───
 
 step "Checking dependencies"
-
-if ! command -v brew &>/dev/null; then
-    fail "Homebrew not found. Install it: https://brew.sh"
-fi
 
 for pkg in tmux nvim fzf; do
     if command -v "$pkg" &>/dev/null; then
         ok "$pkg $($pkg --version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+[^ ]*' | head -1)"
     else
         warn "$pkg not found — installing"
-        local brew_pkg="$pkg"
-        [[ "$pkg" == "nvim" ]] && brew_pkg="neovim"
-        brew install "$brew_pkg"
+        case "$pkg" in
+            nvim)
+                if [[ "$PLATFORM" == "mac" ]]; then
+                    pkg_install neovim
+                else
+                    # apt has outdated nvim — use snap or appimage
+                    if command -v snap &>/dev/null; then
+                        sudo snap install nvim --classic
+                    elif command -v apt-get &>/dev/null; then
+                        # Try PPA for newer version
+                        sudo apt-get install -y -qq software-properties-common
+                        sudo add-apt-repository -y ppa:neovim-ppa/unstable
+                        sudo apt-get update -qq
+                        sudo apt-get install -y -qq neovim
+                    else
+                        pkg_install neovim
+                    fi
+                fi
+                ;;
+            *)  pkg_install "$pkg" ;;
+        esac
         ok "$pkg installed"
     fi
 done
 
 if ! command -v tree-sitter &>/dev/null; then
-    warn "tree-sitter-cli not found — installing"
-    npm install -g tree-sitter-cli
-    ok "tree-sitter-cli installed"
+    if command -v npm &>/dev/null; then
+        warn "tree-sitter-cli not found — installing"
+        npm install -g tree-sitter-cli
+        ok "tree-sitter-cli installed"
+    else
+        warn "tree-sitter-cli not found (npm not available — skipping)"
+    fi
 else
     ok "tree-sitter-cli"
 fi
@@ -74,6 +123,12 @@ fi
 ln -sf "$SCRIPT_DIR/.tmux.conf" "$DEST"
 ok "tmux config → $DEST (symlinked)"
 
+# macOS: fix provenance xattr that blocks TPM
+if [[ "$PLATFORM" == "mac" ]]; then
+    xattr -r -d com.apple.provenance "$TPM_DIR" 2>/dev/null || true
+    xattr -r -d com.apple.quarantine "$TPM_DIR" 2>/dev/null || true
+fi
+
 # ─── Neovim config ───
 
 step "Setting up neovim"
@@ -99,11 +154,9 @@ ok "nvim config → $NVIM_DIR/init.lua"
 step "Installing tmux plugins"
 
 if [[ -n "${TMUX:-}" ]]; then
-    # Inside tmux — source and install
     tmux source-file "$DEST" 2>/dev/null
     "$TPM_DIR/bin/install_plugins" 2>/dev/null && ok "tmux plugins installed" || warn "run prefix I inside tmux to install plugins"
 else
-    # Outside tmux — start a temp server to install
     tmux start-server
     tmux new-session -d -s _install
     "$TPM_DIR/bin/install_plugins" 2>/dev/null && ok "tmux plugins installed" || warn "run prefix I inside tmux to install plugins"
@@ -117,6 +170,7 @@ step "Checking VS Code / Cursor"
 fix_editor_settings() {
     local settings_file="$1"
     local editor_name="$2"
+    local profile_key="$3"
 
     if [[ ! -f "$settings_file" ]]; then
         return
@@ -127,18 +181,22 @@ fix_editor_settings() {
         return
     fi
 
-    # Insert tmux terminal settings after opening brace
     local tmp=$(mktemp)
-    sed '1 a\
-  "terminal.integrated.gpuAcceleration": "off",\
-  "terminal.integrated.profiles.osx": { "tmux": { "path": "tmux", "args": ["new-session", "-A", "-s", "main"], "icon": "terminal-tmux" } },\
-  "terminal.integrated.defaultProfile.osx": "tmux",
-' "$settings_file" > "$tmp" && mv "$tmp" "$settings_file"
+    sed "1 a\\
+  \"terminal.integrated.gpuAcceleration\": \"off\",\\
+  \"terminal.integrated.profiles.${profile_key}\": { \"tmux\": { \"path\": \"tmux\", \"args\": [\"new-session\", \"-A\", \"-s\", \"main\"], \"icon\": \"terminal-tmux\" } },\\
+  \"terminal.integrated.defaultProfile.${profile_key}\": \"tmux\",
+" "$settings_file" > "$tmp" && mv "$tmp" "$settings_file"
     ok "$editor_name patched for tmux"
 }
 
-fix_editor_settings "$HOME/Library/Application Support/Code/User/settings.json" "VS Code"
-fix_editor_settings "$HOME/Library/Application Support/Cursor/User/settings.json" "Cursor"
+if [[ "$PLATFORM" == "mac" ]]; then
+    fix_editor_settings "$HOME/Library/Application Support/Code/User/settings.json" "VS Code" "osx"
+    fix_editor_settings "$HOME/Library/Application Support/Cursor/User/settings.json" "Cursor" "osx"
+else
+    fix_editor_settings "$HOME/.config/Code/User/settings.json" "VS Code" "linux"
+    fix_editor_settings "$HOME/.config/Cursor/User/settings.json" "Cursor" "linux"
+fi
 
 # ─── Done ───
 
