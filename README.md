@@ -29,17 +29,22 @@ Each module can also be installed standalone:
 
 | Module | What it does |
 |--------|-------------|
-| **statusline** | Status bar + turn counter for Claude Code |
+| **statusline** | Two-line status bar with rate limits, effort, and turn counter |
 | **tmux** | Tmux config, TPM, vim nav, system clipboard, editor integration |
 | **nvim** | Neovim config with Lazy, treesitter, telescope, file explorer |
 
 ## Statusline preview
 
 ```
-my-project • main* • Opus 4.6 • [█░░░░░░░] 5% • T12
+my-project/main  opus[1M]  ctx 5%  T#3  ○ low
+session ⏱ 2% 4h 50m                                          weekly ⏳ 60% 2d 15h
 ```
 
-Directory, git branch, model, context usage, and turn count. Turns change color as sessions get longer: cyan (T1-19), yellow (T20-29), red (T30+).
+Two-line layout:
+- **Line 1**: repo/branch, model, context %, turn count, effort level
+- **Line 2**: session rate limit (5h) with reset countdown, weekly limit (7d) on the right
+
+Colors shift green → yellow → red as limits approach. Effort reads from your settings (`/effort` to change).
 
 ## Requirements
 
