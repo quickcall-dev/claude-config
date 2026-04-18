@@ -18,13 +18,14 @@ eval "$(echo "$input" | jq -r '
 ')"
 
 R='\033[0m'; B='\033[1m'; D='\033[2m'
-BLUE='\033[38;5;75m'
-GREEN='\033[38;5;114m'
-YELLOW='\033[38;5;222m'
-RED='\033[38;5;203m'
-CYAN='\033[38;5;117m'
-MAGENTA='\033[38;5;183m'
-GRAY='\033[38;5;242m'
+BLUE='\033[38;5;33m'
+GREEN='\033[38;5;34m'
+YELLOW='\033[38;5;172m'
+RED='\033[38;5;160m'
+CYAN='\033[38;5;31m'
+MAGENTA='\033[38;5;92m'
+GRAY='\033[38;5;244m'
+DIM='\033[38;5;240m'
 
 # ── Git ───────────────────────────────────────────────────────────────────────
 git_root="" git_branch=""
@@ -75,19 +76,39 @@ lc() {
     else echo "$RED"; fi
 }
 
-# ── Rate limits ──────────────────────────────────────────────────────────────
-session_bit=""
+# ── Rate limits (aligned sub-fields) ─────────────────────────────────────────
+s_label="session"; s_pct=""; s_time=""; sc=""
 if [[ -n "$five_h_pct" ]]; then
     sv=$(printf "%.0f" "$five_h_pct"); sc=$(lc "$sv")
-    sr=""; [[ -n "$five_h_reset" ]] && sr=" $(fmt_cd "$five_h_reset")"
-    session_bit="${sc}5h: ${sv}%${sr}${R}"
+    s_pct="${sv}%"
+    [[ -n "$five_h_reset" ]] && s_time=$(fmt_cd "$five_h_reset")
+fi
+
+w_label="weekly"; w_pct=""; w_time=""; wc=""
+if [[ -n "$seven_d_pct" ]]; then
+    wv=$(printf "%.0f" "$seven_d_pct"); wc=$(lc "$wv")
+    w_pct="${wv}%"
+    [[ -n "$seven_d_reset" ]] && w_time=$(fmt_cd "$seven_d_reset")
+fi
+
+lw=$(( ${#s_label} > ${#w_label} ? ${#s_label} : ${#w_label} ))
+pw=$(( ${#s_pct}   > ${#w_pct}   ? ${#s_pct}   : ${#w_pct}   ))
+tw=$(( ${#s_time}  > ${#w_time}  ? ${#s_time}  : ${#w_time}  ))
+
+session_bit=""
+if [[ -n "$s_pct" ]]; then
+    session_bit=$(printf "%b%-*s%b %b%b%*s%b %b%*s%b" \
+        "$GRAY" "$lw" "$s_label" "$R" \
+        "$sc" "$B" "$pw" "$s_pct" "$R" \
+        "$DIM" "$tw" "$s_time" "$R")
 fi
 
 weekly_bit=""
-if [[ -n "$seven_d_pct" ]]; then
-    wv=$(printf "%.0f" "$seven_d_pct"); wc=$(lc "$wv")
-    wr=""; [[ -n "$seven_d_reset" ]] && wr=" $(fmt_cd "$seven_d_reset")"
-    weekly_bit="${wc}7d: ${wv}%${wr}${R}"
+if [[ -n "$w_pct" ]]; then
+    weekly_bit=$(printf "%b%-*s%b %b%b%*s%b %b%*s%b" \
+        "$GRAY" "$lw" "$w_label" "$R" \
+        "$wc" "$B" "$pw" "$w_pct" "$R" \
+        "$DIM" "$tw" "$w_time" "$R")
 fi
 
 # ── Right side ───────────────────────────────────────────────────────────────
@@ -103,22 +124,44 @@ case "$effort" in
 esac
 
 # ── Line 1: identity + turn + effort ────────────────────────────────────────
-line1="${BLUE}${B}${dir}${R}${GRAY}/${R}${GREEN}${git_branch}${R}"
-line1+="  ${MAGENTA}${short_model}${R}"
-line1+="  ${GRAY}ctx${R} ${cc}${B}${used_int}%${R}"
-line1+="  ${GRAY}T#${R}${CYAN}${B}${turn}${R}"
-line1+="  ${effort_display}"
+# ── Column helpers (visible length, strip ANSI) ─────────────────────────────
+vlen() {
+    local s=$1
+    s=$(printf '%b' "$s" | sed 's/\x1b\[[0-9;]*m//g')
+    echo -n "${#s}"
+}
+pad() {
+    local s=$1 w=$2
+    local l; l=$(vlen "$s")
+    local n=$(( w - l ))
+    [[ $n -lt 0 ]] && n=0
+    printf '%b%*s' "$s" "$n" ''
+}
+mx() { [[ $1 -gt $2 ]] && echo "$1" || echo "$2"; }
 
-# ── Line 2: session left, weekly right ──────────────────────────────────────
-line2_left=""
-[[ -n "$session_bit" ]] && line2_left="${GRAY}session${R} ${session_bit}"
+# ── Build columns ────────────────────────────────────────────────────────────
+c1a="${BLUE}${B}${dir}${R}${GRAY}/${R}${GREEN}${git_branch}${R}"
+c1b="${MAGENTA}${short_model}${R}"
 
-line2_right=""
-[[ -n "$weekly_bit" ]] && line2_right="${GRAY}weekly${R} ${weekly_bit}"
+c2a="$session_bit"
+c2b="$weekly_bit"
 
-# ── Output ───────────────────────────────────────────────────────────────────
-if [[ -n "$right" ]]; then
-    printf "%b\t%b\n%b\t%b" "$line1" "$right" "$line2_left" "$line2_right"
-else
-    printf "%b\n%b\t%b" "$line1" "$line2_left" "$line2_right"
-fi
+c3a="${GRAY}ctx${R} ${cc}${B}${used_int}%${R}"
+c3b="$effort_display"
+
+c4a="${GRAY}T#${R}${CYAN}${B}${turn}${R}"
+c4b=""
+
+c5a="$right"
+c5b=""
+
+w1=$(mx "$(vlen "$c1a")" "$(vlen "$c1b")")
+w2=$(mx "$(vlen "$c2a")" "$(vlen "$c2b")")
+w3=$(mx "$(vlen "$c3a")" "$(vlen "$c3b")")
+w4=$(mx "$(vlen "$c4a")" "$(vlen "$c4b")")
+
+SEP="  "
+line1="$(pad "$c1a" "$w1")${SEP}$(pad "$c2a" "$w2")${SEP}$(pad "$c3a" "$w3")${SEP}$(pad "$c4a" "$w4")${SEP}${c5a}"
+line2="$(pad "$c1b" "$w1")${SEP}$(pad "$c2b" "$w2")${SEP}$(pad "$c3b" "$w3")${SEP}$(pad "$c4b" "$w4")${SEP}${c5b}"
+
+printf '%b\n%b' "$line1" "$line2"

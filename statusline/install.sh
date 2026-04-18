@@ -63,7 +63,7 @@ else
 fi
 
 echo ""
-echo -e "  ${D}preview:${R}  ${BLU}my-project${R}${D}/${R}${GRN}main${R}  ${MAG}opus[1M]${R}  ${D}ctx${R} ${GRN}5%${R}  ${D}T#${R}${CYN}3${R}  ${GRN}o low${R}"
-echo -e "          ${D}session${R} ${GRN}5h: 2% 4h 50m${R}  ${D}weekly${R} ${YLW}7d: 60% 2d 15h${R}"
+echo -e "  ${D}preview:${R}  ${BLU}my-project${R}${D}/${R}${GRN}main${R}  ${D}session${R} ${GRN} 2%${R} ${D}4h 50m${R}  ${D}ctx${R} ${GRN}5%${R}  ${D}T#${R}${CYN}3${R}"
+echo -e "          ${MAG}opus[1M]${R}       ${D}weekly${R}  ${YLW}60%${R} ${D}2d 15h${R}  ${GRN}o low${R}"
 echo -e "  ${D}restart claude code to activate${R}"
 echo ""
