@@ -80,26 +80,26 @@ session_bit=""
 if [[ -n "$five_h_pct" ]]; then
     sv=$(printf "%.0f" "$five_h_pct"); sc=$(lc "$sv")
     sr=""; [[ -n "$five_h_reset" ]] && sr=" $(fmt_cd "$five_h_reset")"
-    session_bit="${sc}⏱ ${sv}%${sr}${R}"
+    session_bit="${sc}5h: ${sv}%${sr}${R}"
 fi
 
 weekly_bit=""
 if [[ -n "$seven_d_pct" ]]; then
     wv=$(printf "%.0f" "$seven_d_pct"); wc=$(lc "$wv")
     wr=""; [[ -n "$seven_d_reset" ]] && wr=" $(fmt_cd "$seven_d_reset")"
-    weekly_bit="${wc}⏳ ${wv}%${wr}${R}"
+    weekly_bit="${wc}7d: ${wv}%${wr}${R}"
 fi
 
 # ── Right side ───────────────────────────────────────────────────────────────
 right=""
-[[ -n "$session_name" ]] && right="${GRAY}⧉ ${session_name}${R}"
+[[ -n "$session_name" ]] && right="${GRAY}[s] ${session_name}${R}"
 
 # ── Effort level (read from settings) ────────────────────────────────────────
 effort=$(jq -r '.effortLevel // "medium"' ~/.claude/settings.json 2>/dev/null)
 case "$effort" in
-    low)  effort_display="${GREEN}○ low${R}" ;;
-    high) effort_display="${RED}● high${R}" ;;
-    *)    effort_display="${YELLOW}◐ med${R}" ;;
+    low)  effort_display="${GREEN}o low${R}" ;;
+    high) effort_display="${RED}* high${R}" ;;
+    *)    effort_display="${YELLOW}~ med${R}" ;;
 esac
 
 # ── Line 1: identity + turn + effort ────────────────────────────────────────
