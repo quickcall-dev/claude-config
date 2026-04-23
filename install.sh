@@ -33,6 +33,7 @@ fi
 
 describe() {
     case "$1" in
+        caveman)    echo "caveman Claude Code plugin — ~75% fewer output tokens" ;;
         ghostty)    echo "ghostty terminal, GitHub Light theme, symlinked config" ;;
         karabiner)  echo "Karabiner-Elements + sagarsrc/karabiner_scripts config" ;;
         statusline) echo "status bar + turn counter for Claude Code" ;;
