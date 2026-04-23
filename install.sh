@@ -34,8 +34,10 @@ fi
 describe() {
     case "$1" in
         caveman)    echo "caveman Claude Code plugin — ~75% fewer output tokens" ;;
+        claude)     echo "Claude Code CLI via claude.ai/install.sh" ;;
         ghostty)    echo "ghostty terminal, GitHub Light theme, symlinked config" ;;
         karabiner)  echo "Karabiner-Elements + sagarsrc/karabiner_scripts config" ;;
+        node)       echo "Node.js, npm, npx via system package manager" ;;
         statusline) echo "status bar + turn counter for Claude Code" ;;
         tmux)       echo "tmux config, TPM, vim nav, clipboard" ;;
         nvim)       echo "neovim config with Lazy, treesitter, fzf" ;;
