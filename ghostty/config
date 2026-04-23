@@ -8,7 +8,7 @@
 # THEME
 # --------------------------------------------
 
-theme = Catppuccin Latte
+theme = light:Catppuccin Latte,dark:Catppuccin Mocha
 
 # --------------------------------------------
 # FONT
