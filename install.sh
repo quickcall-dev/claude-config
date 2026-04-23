@@ -34,6 +34,7 @@ fi
 describe() {
     case "$1" in
         ghostty)    echo "ghostty terminal, GitHub Light theme, symlinked config" ;;
+        karabiner)  echo "Karabiner-Elements + sagarsrc/karabiner_scripts config" ;;
         statusline) echo "status bar + turn counter for Claude Code" ;;
         tmux)       echo "tmux config, TPM, vim nav, clipboard" ;;
         nvim)       echo "neovim config with Lazy, treesitter, fzf" ;;
