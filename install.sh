@@ -38,6 +38,7 @@ describe() {
         ghostty)    echo "ghostty terminal, GitHub Light theme, symlinked config" ;;
         karabiner)  echo "Karabiner-Elements + sagarsrc/karabiner_scripts config" ;;
         node)       echo "Node.js, npm, npx via system package manager" ;;
+        skills)     echo "QuickCall Claude Code skills (quickcall-dev/skills)" ;;
         statusline) echo "status bar + turn counter for Claude Code" ;;
         tmux)       echo "tmux config, TPM, vim nav, clipboard" ;;
         nvim)       echo "neovim config with Lazy, treesitter, fzf" ;;
