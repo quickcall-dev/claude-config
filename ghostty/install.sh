@@ -34,5 +34,5 @@ ok "ghostty config ${D}→ ~/.config/ghostty/config (symlinked)${R}"
 
 echo ""
 echo -e "  ${GRN}Done!${R} Open Ghostty to apply"
-echo -e "  ${D}Theme: GitHub Light  |  Font: JetBrains Mono 14${R}"
+echo -e "  ${D}Theme: GitHub Light Default  |  Font: JetBrains Mono 14${R}"
 echo ""
