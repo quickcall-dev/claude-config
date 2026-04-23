@@ -40,7 +40,8 @@ fi
 dir="${git_root:-$(basename "$cwd")}"
 
 # ── Model short ──────────────────────────────────────────────────────────────
-short_model=$(echo "$model" | sed -E 's/Claude //; s/ \(.*//; s/^(.)/\L\1/')
+short_model=$(echo "$model" | sed -E 's/Claude //; s/ \(.*//')
+short_model="${short_model,}"
 if [[ $ctx_window_size -ge 1000000 ]]; then
     short_model+="[$(( ctx_window_size / 1000000 ))M]"
 elif [[ $ctx_window_size -ge 1000 ]]; then
