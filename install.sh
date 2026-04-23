@@ -33,6 +33,7 @@ fi
 
 describe() {
     case "$1" in
+        ghostty)    echo "ghostty terminal, GitHub Light theme, symlinked config" ;;
         statusline) echo "status bar + turn counter for Claude Code" ;;
         tmux)       echo "tmux config, TPM, vim nav, clipboard" ;;
         nvim)       echo "neovim config with Lazy, treesitter, fzf" ;;
