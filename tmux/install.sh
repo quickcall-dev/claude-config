@@ -30,6 +30,21 @@ backup_file "$DEST"
 ln -sf "$SCRIPT_DIR/.tmux.conf" "$DEST"
 ok "tmux config ${D}→ ~/.tmux.conf (symlinked)${R}"
 
+# ─── Shell helpers (auto-name tmux sessions from CWD) ───
+
+HELPERS_SRC="$SCRIPT_DIR/shell-helpers.sh"
+SNIPPET="[ -f \"$HELPERS_SRC\" ] && source \"$HELPERS_SRC\"  # claude-config tmux helpers"
+
+for rc in "$HOME/.zshrc" "$HOME/.bashrc"; do
+    [[ -f "$rc" ]] || continue
+    if ! grep -Fq "claude-config tmux helpers" "$rc" 2>/dev/null; then
+        printf '\n%s\n' "$SNIPPET" >> "$rc"
+        ok "shell helpers ${D}→ $(basename "$rc")${R}"
+    else
+        ok "shell helpers already in $(basename "$rc")"
+    fi
+done
+
 # macOS: fix provenance xattr that blocks TPM
 if [[ "$PLATFORM" == "mac" ]]; then
     xattr -r -d com.apple.provenance "$TPM_DIR" 2>/dev/null || true
