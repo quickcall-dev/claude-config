@@ -32,6 +32,16 @@ backup_file "$DEST"
 ln -sf "$SCRIPT_DIR/config" "$DEST"
 ok "ghostty config ${D}→ ~/.config/ghostty/config (symlinked)${R}"
 
+# ─── Themes ───
+
+THEMES_DEST="$HOME/.config/ghostty/themes"
+mkdir -p "$THEMES_DEST"
+for theme in "$SCRIPT_DIR/themes/"*; do
+    [[ -f "$theme" ]] || continue
+    ln -sf "$theme" "$THEMES_DEST/$(basename "$theme")"
+    ok "theme ${D}$(basename "$theme") → ~/.config/ghostty/themes/${R}"
+done
+
 echo ""
 echo -e "  ${GRN}Done!${R} Open Ghostty to apply"
 echo -e "  ${D}Theme: Catppuccin Latte/Mocha (auto light/dark)  |  Font: JetBrains Mono 14${R}"
