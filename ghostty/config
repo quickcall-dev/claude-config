@@ -8,7 +8,7 @@
 # THEME
 # --------------------------------------------
 
-theme = catppuccin-macchiato
+# theme = catppuccin-macchiato  # removed — use ghostty built-in default
 
 # --------------------------------------------
 # FONT
