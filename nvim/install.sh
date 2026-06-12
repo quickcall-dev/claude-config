@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 source "$ROOT_DIR/lib/common.sh"
 
-step "Installing neovim config"
+step "Installing neovim config (LazyVim)"
 
 # Ensure nvim is installed
 if ! command -v nvim &>/dev/null; then
@@ -46,13 +46,17 @@ fi
 NVIM_DIR="$HOME/.config/nvim"
 mkdir -p "$NVIM_DIR"
 
-backup_file "$NVIM_DIR/init.lua"
+backup_file "$NVIM_DIR"
 
-cp "$SCRIPT_DIR/init.lua" "$NVIM_DIR/init.lua"
-ok "init.lua ${D}→ ~/.config/nvim/${R}"
+# Copy all files
+rsync -a "$SCRIPT_DIR/" "$NVIM_DIR/" --exclude install.sh --exclude README.md
+ok "nvim config ${D}→ ~/.config/nvim/${R}"
 
 # Install plugins
 step "Installing nvim plugins"
 nvim --headless "+Lazy! sync" +qa 2>/dev/null && ok "plugins installed" || warn "open nvim manually — plugins will auto-install"
 
+echo ""
+echo -e "  ${GRN}Done!${R} Run ${CYN}nvim${R} to start"
+echo -e "  ${D}Theme: Rose Pine Dawn  |  Leader: Space${R}"
 echo ""

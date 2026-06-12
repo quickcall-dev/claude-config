@@ -8,13 +8,13 @@
 # THEME
 # --------------------------------------------
 
-# theme = catppuccin-macchiato  # removed — use ghostty built-in default
+theme = vscode-light.conf
 
 # --------------------------------------------
 # FONT
 # --------------------------------------------
 
-font-family = JetBrains Mono
+font-family = MesloLGS NF
 font-size = 14
 
 # --------------------------------------------

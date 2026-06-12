@@ -5,30 +5,34 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 source "$ROOT_DIR/lib/common.sh"
 
-step "Installing tmux config"
+step "Installing tmux config (oh-my-tmux)"
 
-# Ensure tmux is installed
 ensure_cmd tmux
 
-# ─── TPM ───
+# ─── oh-my-tmux ───
 
-TPM_DIR="$HOME/.tmux/plugins/tpm"
-if [[ -d "$TPM_DIR" ]]; then
-    ok "TPM already installed"
+OMT_DIR="$HOME/.oh-my-tmux"
+if [[ -d "$OMT_DIR" ]]; then
+    ok "oh-my-tmux already cloned"
 else
-    git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"
-    ok "TPM installed"
+    git clone --single-branch https://github.com/gpakosz/.tmux.git "$OMT_DIR"
+    ok "oh-my-tmux cloned"
 fi
 
 # ─── Config ───
 
-DEST="$HOME/.tmux.conf"
+CONF_DEST="$HOME/.tmux.conf"
+LOCAL_DEST="$HOME/.tmux.conf.local"
 
-backup_file "$DEST"
-[[ -L "$DEST" ]] && rm "$DEST"
+backup_file "$CONF_DEST"
+backup_file "$LOCAL_DEST"
 
-ln -sf "$SCRIPT_DIR/.tmux.conf" "$DEST"
-ok "tmux config ${D}→ ~/.tmux.conf (symlinked)${R}"
+[[ -L "$CONF_DEST" ]] && rm "$CONF_DEST"
+ln -sf "$OMT_DIR/.tmux.conf" "$CONF_DEST"
+ok "tmux.conf ${D}→ ~/.tmux.conf (symlinked to oh-my-tmux)${R}"
+
+ln -sf "$SCRIPT_DIR/.tmux.conf.local" "$LOCAL_DEST"
+ok ".tmux.conf.local ${D}→ ~/.tmux.conf.local (symlinked)${R}"
 
 # ─── Shell helpers (auto-name tmux sessions from CWD) ───
 
@@ -45,55 +49,7 @@ for rc in "$HOME/.zshrc" "$HOME/.bashrc"; do
     fi
 done
 
-# macOS: fix provenance xattr that blocks TPM
-if [[ "$PLATFORM" == "mac" ]]; then
-    xattr -r -d com.apple.provenance "$TPM_DIR" 2>/dev/null || true
-    xattr -r -d com.apple.quarantine "$TPM_DIR" 2>/dev/null || true
-fi
-
-# ─── Install plugins ───
-
-step "Installing tmux plugins"
-
-if [[ -n "${TMUX:-}" ]]; then
-    tmux source-file "$DEST" 2>/dev/null
-    "$TPM_DIR/bin/install_plugins" 2>/dev/null && ok "plugins installed" || warn "run prefix+I inside tmux to install plugins"
-else
-    tmux start-server
-    tmux new-session -d -s _install
-    "$TPM_DIR/bin/install_plugins" 2>/dev/null && ok "plugins installed" || warn "run prefix+I inside tmux to install plugins"
-    tmux kill-session -t _install 2>/dev/null
-fi
-
-# ─── VS Code / Cursor ───
-
-step "Checking editors"
-
-fix_editor_settings() {
-    local settings_file="$1" editor_name="$2" profile_key="$3"
-    [[ ! -f "$settings_file" ]] && return
-    if grep -q "gpuAcceleration" "$settings_file"; then
-        ok "$editor_name already configured"
-        return
-    fi
-    local tmp=$(mktemp)
-    sed "1 a\\
-  \"terminal.integrated.gpuAcceleration\": \"off\",\\
-  \"terminal.integrated.profiles.${profile_key}\": { \"tmux\": { \"path\": \"tmux\", \"args\": [\"new-session\", \"-A\", \"-s\", \"main\"], \"icon\": \"terminal-tmux\" } },\\
-  \"terminal.integrated.defaultProfile.${profile_key}\": \"tmux\",
-" "$settings_file" > "$tmp" && mv "$tmp" "$settings_file"
-    ok "$editor_name patched for tmux"
-}
-
-if [[ "$PLATFORM" == "mac" ]]; then
-    fix_editor_settings "$HOME/Library/Application Support/Code/User/settings.json" "VS Code" "osx"
-    fix_editor_settings "$HOME/Library/Application Support/Cursor/User/settings.json" "Cursor" "osx"
-else
-    fix_editor_settings "$HOME/.config/Code/User/settings.json" "VS Code" "linux"
-    fix_editor_settings "$HOME/.config/Cursor/User/settings.json" "Cursor" "linux"
-fi
-
 echo ""
 echo -e "  ${GRN}Done!${R} Run ${CYN}tmux${R} to start"
-echo -e "  ${D}Prefix: Ctrl+b  |  Reload: prefix r  |  Splits: prefix | and prefix -${R}"
+echo -e "  ${D}Prefix: Ctrl+b  |  Reload: prefix r${R}"
 echo ""
